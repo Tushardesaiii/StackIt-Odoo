@@ -13,6 +13,7 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Feed from "./pages/Feed";
 import Navbar from "./Components/Navbar";
+import Question from "./pages/Question.jsx";
 
 function AppContent() {
   const location = useLocation();
@@ -45,6 +46,12 @@ function AppContent() {
           path="/feed"
           element={
             currentUser ? <Feed /> : <Navigate to="/login" replace />
+          }
+        />
+        <Route
+          path="/question"
+          element={
+            currentUser ? <Question /> : <Navigate to="/login" replace />
           }
         />
         {/* Optional: 404 fallback */}
