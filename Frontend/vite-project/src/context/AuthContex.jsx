@@ -1,4 +1,3 @@
-// context/AuthContext.jsx
 import { createContext, useContext, useEffect, useState } from "react";
 import axios from "axios";
 
@@ -10,7 +9,13 @@ export const AuthProvider = ({ children }) => {
 
   const fetchCurrentUser = async () => {
     try {
-      const res = await axios.get("/api/v1/users/me", { withCredentials: true });
+      const token = localStorage.getItem("accessToken");
+      const res = await axios.get("/api/v1/users/me", {
+        withCredentials: true,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setCurrentUser(res.data.data);
     } catch (error) {
       setCurrentUser(null);

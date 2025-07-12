@@ -17,13 +17,18 @@ const generateAccessAndRefreshTokens = async (userId) => {
   return { accessToken, refreshToken };
 };
 
+// ✅ Handle cookies differently in dev vs prod
 const cookieOptions = {
+
   httpOnly: true,
-  secure: process.env.NODE_ENV === "production",
-  sameSite: "none",
+  secure: process.env.NODE_ENV === "production", // only secure in prod (HTTPS)
+  sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
+  maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+
+
 };
 
-// REGISTER
+// =================== REGISTER ===================
 export const registerUser = asyncHandler(async (req, res) => {
   const { fullName, username, email, password } = req.body;
   if (!fullName || !username || !email || !password) {
@@ -59,7 +64,7 @@ export const registerUser = asyncHandler(async (req, res) => {
   );
 });
 
-// LOGIN
+// =================== LOGIN ===================
 export const loginUser = asyncHandler(async (req, res) => {
   const { email, username, password } = req.body;
   if (!username && !email)
@@ -77,19 +82,20 @@ export const loginUser = asyncHandler(async (req, res) => {
   const isPasswordValid = await user.isPasswordCorrect(password);
   if (!isPasswordValid) throw new ApiError(401, "Invalid credentials");
 
-  // For guest users, no need to check verification
   if (user.role !== "guest" && !user.isVerified)
     throw new ApiError(401, "Please verify your email");
 
   const { accessToken, refreshToken } = await generateAccessAndRefreshTokens(
     user._id
   );
+
   user.lastLogin = Date.now();
   await user.save({ validateBeforeSave: false });
 
   const loggedInUser = await User.findById(user._id).select(
     "-password -refreshToken"
   );
+
   return res
     .status(200)
     .cookie("accessToken", accessToken, cookieOptions)
@@ -103,12 +109,11 @@ export const loginUser = asyncHandler(async (req, res) => {
     );
 });
 
-// GUEST LOGIN
+// =================== GUEST LOGIN ===================
 export const guestLogin = asyncHandler(async (req, res) => {
-  // You can customize these guest user details if you want
   const guestUsername = `guest_${Date.now()}`;
   const guestEmail = `guest_${Date.now()}@guest.com`;
-  const guestPassword = Math.random().toString(36).slice(-8); // random password
+  const guestPassword = Math.random().toString(36).slice(-8);
 
   const guestUser = await User.create({
     fullName: "Guest User",
@@ -126,6 +131,7 @@ export const guestLogin = asyncHandler(async (req, res) => {
   const loggedInUser = await User.findById(guestUser._id).select(
     "-password -refreshToken"
   );
+
   return res
     .status(200)
     .cookie("accessToken", accessToken, cookieOptions)
@@ -139,7 +145,7 @@ export const guestLogin = asyncHandler(async (req, res) => {
     );
 });
 
-// LOGOUT
+// =================== LOGOUT ===================
 export const logoutUser = asyncHandler(async (req, res) => {
   if (!req.user?._id) throw new ApiError(401, "Unauthorized");
 
@@ -159,10 +165,11 @@ export const logoutUser = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, {}, "Logout successful"));
 });
 
-// REFRESH TOKEN
+// =================== REFRESH TOKEN ===================
 export const refreshAccessToken = asyncHandler(async (req, res) => {
   const incomingRefreshToken =
     req.cookies.refreshToken || req.body.refreshToken;
+
   if (!incomingRefreshToken)
     throw new ApiError(401, "No refresh token provided");
 
@@ -200,7 +207,7 @@ export const refreshAccessToken = asyncHandler(async (req, res) => {
   }
 });
 
-// GET CURRENT USER
+// =================== GET CURRENT USER ===================
 export const getCurrentUser = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id).select("-password");
   if (!user) throw new ApiError(404, "User not found");

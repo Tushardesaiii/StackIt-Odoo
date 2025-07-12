@@ -16,9 +16,9 @@ router.get("/", getAllQuestions);
 router.get("/:id", getQuestionById);
 
 // ✅ Protected routes use verifyJWT
-router.post("/", verifyJWT, createQuestion);
-router.post("/:id/vote", verifyJWT, voteQuestion);
-router.patch("/:questionId/accept/:answerId", verifyJWT, acceptAnswer);
-router.delete("/:id", verifyJWT, deleteQuestion);
+router.post("/", createQuestion);
+router.post("/:id/vote", voteQuestion);
+router.patch("/:questionId/accept/:answerId", acceptAnswer);
+router.delete("/:id", deleteQuestion);
 
 export default router;

@@ -1,154 +1,165 @@
-import React from 'react';
+// src/pages/Question.jsx
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { Link } from 'react-router-dom';
 
-const questions = [
-  {
-    votes: 42,
-    answers: 8,
-    views: 1250,
-    title: 'How to implement authentication in Next.js 14 with App Router?',
-    description:
-      "I'm trying to set up authentication in my Next.js 14 application using the new App Router. What's the best approach for handling user sessions and protecting routes?",
-    tags: ['nextjs', 'authentication', 'app-router', 'react'],
-    user: 'Sarah Chen',
-    userRep: 2840,
-    time: '2 hours ago',
-  },
-  {
-    votes: 38,
-    answers: null,
-    views: null,
-    title: 'Best practices for state management in large React applications',
-    description:
-      'Our React application is growing and state management is becoming complex. Should we use Redux, Zustand, or stick with Context API?',
-    tags: ['react', 'state-management', 'redux', 'zustand'],
-    user: null,
-    userRep: null,
-    time: null,
-  },
-];
+const BASE_URL = import.meta.env.VITE_BASE_URL || "http://localhost:8000";
 
-const tags = [
+const popularTags = [
   'javascript', 'react', 'typescript', 'nextjs', 'nodejs', 'python', 'css', 'html', 'database', 'api'
 ];
 
 export default function Question() {
+  const [questions, setQuestions] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [activeTab, setActiveTab] = useState('All');
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      try {
+        const res = await axios.get(`${BASE_URL}/api/v1/questions`);
+        setQuestions(res.data.data || []);
+      } catch (err) {
+        setError("Failed to load questions.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchQuestions();
+  }, []);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-zinc-900 to-black font-sans text-white">
-      <header className="p-8">
-        <h1 className="text-4xl font-bold tracking-tight">All Questions</h1>
-        <p className="mt-2 text-zinc-400">5 questions asked by the community</p>
-      </header>
-      <main className="flex flex-row gap-8 px-8">
-        {/* Left: Questions List */}
-        <section className="flex-1 space-y-6">
-          {/* Search and Filters */}
-          <div className="flex items-center gap-4 mb-4">
-            <input
-              className="w-full rounded-lg px-4 py-2 bg-glassLight text-white placeholder-zinc-400 border border-zinc-700 focus:outline-none focus:ring-2 focus:ring-white/20 backdrop-blur-md"
-              placeholder="Search questions..."
-            />
-            <button className="bg-glass px-4 py-2 rounded-lg border border-zinc-700 text-white hover:bg-zinc-800 transition">
-              Newest
-            </button>
-            <button className="bg-glass px-4 py-2 rounded-lg border border-zinc-700 text-white hover:bg-zinc-800 transition">
-              All...
-            </button>
+    <div className="min-h-screen font-sans bg-gradient-to-br from-black via-zinc-900 to-black text-white relative overflow-x-hidden">
+      {/* Background shapes */}
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <div className="absolute -top-32 -left-32 w-[520px] h-[520px] rounded-full bg-white/10 blur-3xl animate-pulse-slow" />
+        <div className="absolute bottom-0 right-0 w-[340px] h-[340px] rounded-full bg-white/5 blur-2xl animate-pulse-slow" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[340px] h-[340px] rounded-full bg-white/10 blur-2xl opacity-40" />
+      </div>
+
+      <header className="max-w-7xl mx-auto px-6 pt-20 pb-6 relative z-10">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-4xl font-extrabold tracking-tight mb-1">All Questions</h1>
+            <p className="text-zinc-400 text-lg">
+              {loading ? "Loading questions..." : `${questions.length} questions asked by the community`}
+            </p>
           </div>
+          <button 
+            onClick={() => window.location.href = '/feed'}
+            className="bg-white/90 text-black font-bold px-6 py-3 rounded-xl shadow-xl hover:bg-white transition duration-150"
+          >
+            + Ask Question
+          </button>
+        </div>
+      </header>
+
+      <main className="max-w-7xl mx-auto flex flex-col md:flex-row gap-8 px-6 pb-16 relative z-10">
+        <section className="flex-1 min-w-0">
           {/* Tabs */}
-          <div className="flex gap-2 mb-4">
+          <div className="flex gap-2 mb-6">
             {['All', 'Unanswered', 'Answered', 'Bounty'].map(tab => (
               <button
                 key={tab}
-                className={`px-4 py-2 rounded-full font-medium ${
-                  tab === 'All'
-                    ? 'bg-white text-black shadow'
-                    : 'bg-glass text-white hover:bg-zinc-800'
-                } transition`}
+                onClick={() => setActiveTab(tab)}
+                className={`px-5 py-2.5 rounded-full font-semibold text-base transition shadow
+                  ${activeTab === tab
+                    ? 'bg-white text-black shadow-lg'
+                    : 'bg-white/10 text-white/80 hover:bg-white/20'
+                  }`}
               >
                 {tab}
               </button>
             ))}
           </div>
-          {/* Questions */}
-          {questions.map((q, idx) => (
-            <div
-              key={idx}
-              className="flex flex-row bg-glass border border-zinc-700 rounded-2xl p-6 gap-6 items-start backdrop-blur-lg shadow-xl"
-            >
-              {/* Stats */}
-              <div className="flex flex-col items-center gap-4 min-w-[60px]">
-                <div className="text-2xl font-bold">{q.votes}</div>
-                <div className="bg-zinc-800/80 px-3 py-1 rounded-lg text-sm font-semibold text-green-400">
-                  {q.answers !== null ? `${q.answers} answers` : ''}
-                </div>
-                <div className="text-zinc-400 text-xs">{q.views !== null ? `${q.views} views` : ''}</div>
-              </div>
-              {/* Content */}
-              <div className="flex-1">
-                <h2 className="text-xl font-semibold mb-2">{q.title}</h2>
-                <p className="text-zinc-300 mb-3">{q.description}</p>
-                <div className="flex flex-wrap gap-2 mb-3">
-                  {q.tags.map(tag => (
-                    <span
-                      key={tag}
-                      className="bg-white/10 text-white px-3 py-1 rounded-full text-xs font-medium border border-zinc-700"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-                {q.user && (
-                  <div className="flex items-center gap-2 text-zinc-400 text-sm">
-                    <div className="w-7 h-7 rounded-full bg-zinc-700" />
-                    <span>{q.user}</span>
-                    <span className="bg-zinc-700 px-2 py-0.5 rounded text-xs ml-2">{q.userRep}</span>
-                    <span className="ml-4">{q.time}</span>
+
+          {/* Loader/Error */}
+          {loading && <div className="text-zinc-400">Loading questions...</div>}
+          {error && <div className="text-red-400">{error}</div>}
+
+          <div className="space-y-7">
+            {questions.map((q, idx) => (
+              <Link
+                to={`/questions/${q._id}`}
+                key={q._id || idx}
+                className="block"
+              >
+                <div className="flex flex-row bg-white/10 border border-white/20 rounded-2xl p-7 gap-7 items-start backdrop-blur-xl shadow-2xl transition hover:scale-[1.01] hover:shadow-2xl">
+                  <div className="flex flex-col items-center gap-4 min-w-[60px]">
+                    <div className="text-2xl font-extrabold">{(q.upvotes?.length || 0) - (q.downvotes?.length || 0)}</div>
+                    <div className="bg-green-500/10 px-3 py-1 rounded-lg text-sm font-semibold text-green-400 border border-green-400/30">
+                      {q.answers?.length || 0} answers
+                    </div>
+                    <div className="text-zinc-400 text-xs">{q.views || 0} views</div>
                   </div>
-                )}
-              </div>
-            </div>
-          ))}
+                  <div className="flex-1 min-w-0">
+                    <h2 className="text-xl font-bold mb-2">{q.title}</h2>
+                    <p className="text-zinc-300 mb-3 line-clamp-3">{q.description}</p>
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {q.tags?.map(tag => (
+                        <span key={tag} className="bg-white/10 text-white px-3 py-1 rounded-full text-xs font-medium border border-white/20">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                    <div className="flex items-center gap-2 text-zinc-400 text-sm">
+                      <div className="w-7 h-7 rounded-full bg-zinc-700" />
+                      <span>Guest</span>
+                      <span className="ml-4">{q.createdAt ? new Date(q.createdAt).toLocaleDateString() : "Just now"}</span>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+            {!loading && questions.length === 0 && (
+              <div className="text-zinc-400 text-lg mt-12 text-center">No questions found.</div>
+            )}
+          </div>
         </section>
-        {/* Right: Sidebar */}
-        <aside className="w-72 flex flex-col gap-6">
-          {/* Popular Tags */}
-          <div className="bg-glass border border-zinc-700 rounded-2xl p-6 backdrop-blur-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">Popular Tags</h3>
+
+        {/* Sidebar */}
+        <aside className="w-full md:w-80 flex-shrink-0 flex flex-col gap-8">
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 backdrop-blur-xl shadow-xl">
+            <h3 className="text-lg font-bold mb-4">Popular Tags</h3>
             <div className="flex flex-wrap gap-2">
-              {tags.map(tag => (
-                <span
-                  key={tag}
-                  className="bg-white/10 text-white px-3 py-1 rounded-full text-xs font-medium border border-zinc-700"
-                >
+              {popularTags.map(tag => (
+                <span key={tag} className="bg-white/20 text-white px-3 py-1 rounded-full text-xs font-medium border border-white/20">
                   {tag}
                 </span>
               ))}
             </div>
           </div>
-          {/* Today's Activity */}
-          <div className="bg-glass border border-zinc-700 rounded-2xl p-6 backdrop-blur-lg shadow-lg">
-            <h3 className="text-lg font-semibold mb-4">Today's Activity</h3>
+          <div className="bg-white/10 border border-white/20 rounded-2xl p-6 backdrop-blur-xl shadow-xl">
+            <h3 className="text-lg font-bold mb-4">Today's Activity</h3>
             <div className="flex flex-col gap-2 text-zinc-300">
               <div className="flex justify-between">
                 <span>Questions asked:</span>
-                <span className="font-semibold text-white">24</span>
+                <span className="font-semibold text-white">{questions.length}</span>
               </div>
               <div className="flex justify-between">
                 <span>Answers posted:</span>
-                <span className="font-semibold text-green-400">67</span>
+                <span className="font-semibold text-green-400">–</span>
               </div>
               <div className="flex justify-between">
                 <span>Active users:</span>
-                <span className="font-semibold text-purple-400">156</span>
+                <span className="font-semibold text-purple-400">–</span>
               </div>
             </div>
           </div>
         </aside>
       </main>
-      {/* Ask Question Button */}
-      <button className="fixed top-8 right-8 bg-white text-black font-bold px-6 py-3 rounded-xl shadow-lg hover:bg-zinc-200 transition">
-        + Ask Question
-      </button>
+
+      <style>{`
+        .animate-pulse-slow {
+          animation: pulse 7s cubic-bezier(.4,0,.6,1) infinite;
+        }
+        @keyframes pulse {
+          0%,100% { opacity: 0.7; }
+          50% { opacity: 1; }
+        }
+      `}</style>
     </div>
   );
 }

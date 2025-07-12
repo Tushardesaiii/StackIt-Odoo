@@ -10,19 +10,22 @@ const questionSchema = new mongoose.Schema(
     },
     description: {
       type: String,
-      required: [true, "Description is required"], // supports rich text
+      required: [true, "Description is required"],
     },
     tags: {
       type: [String],
       required: [true, "At least one tag is required"],
     },
+
+    // Make author optional and default to "guest"
     author: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true,
+      type: String,
+      default: "guest",
     },
-    upvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
-    downvotes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+
+    // Disable upvotes/downvotes/answers for now
+    upvotes: { type: [String], default: [] },
+    downvotes: { type: [String], default: [] },
     acceptedAnswer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Answer",

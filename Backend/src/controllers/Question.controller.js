@@ -1,118 +1,51 @@
 import { Question } from "../models/Question.model.js";
-import { Answer } from "../models/answer.model.js";
-
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 
-// CREATE QUESTION
+// CREATE QUESTION (no auth)
 export const createQuestion = asyncHandler(async (req, res) => {
-  const { title, description, tags } = req.body;
+  const { title, description, tags = [] } = req.body;
 
-  if (!title || !description || !tags?.length) {
-    throw new ApiError(400, "Title, description and tags are required");
+  if (!title || !description) {
+    throw new ApiError(400, "Title and description are required");
   }
 
   const question = await Question.create({
     title,
     description,
     tags,
-    author: req.user._id,
+    createdBy: "guest", // optional
   });
 
-  res.status(201).json(new ApiResponse(201, question, "Question created"));
+  return res
+    .status(201)
+    .json(new ApiResponse(201, question, "Question created successfully"));
 });
 
-// GET ALL QUESTIONS (Feed)
+// Optionally comment out others for now if not in use:
 export const getAllQuestions = asyncHandler(async (req, res) => {
-  const questions = await Question.find()
-    .populate("author", "username fullName")
-    .sort({ createdAt: -1 });
-
-  res.status(200).json(new ApiResponse(200, questions));
+  const questions = await Question.find().sort({ createdAt: -1 });
+  return res.status(200).json(new ApiResponse(200, questions));
 });
 
-// GET SINGLE QUESTION (Detail page)
 export const getQuestionById = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const question = await Question.findById(id)
-    .populate("author", "username fullName")
-    .populate({
-      path: "answers",
-      populate: { path: "author", select: "username fullName" },
-    });
-
+  const question = await Question.findById(id);
   if (!question) throw new ApiError(404, "Question not found");
 
-  res.status(200).json(new ApiResponse(200, question));
+  return res.status(200).json(new ApiResponse(200, question));
 });
 
-// VOTE (UPVOTE / DOWNVOTE)
+// Stub out the rest if not used now
 export const voteQuestion = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-  const { type } = req.body; // type = "up" | "down"
-  const userId = req.user._id;
-
-  const question = await Question.findById(id);
-  if (!question) throw new ApiError(404, "Question not found");
-
-  const hasUpvoted = question.upvotes.includes(userId);
-  const hasDownvoted = question.downvotes.includes(userId);
-
-  if (type === "up") {
-    if (hasUpvoted) {
-      question.upvotes.pull(userId);
-    } else {
-      question.upvotes.push(userId);
-      if (hasDownvoted) question.downvotes.pull(userId);
-    }
-  } else if (type === "down") {
-    if (hasDownvoted) {
-      question.downvotes.pull(userId);
-    } else {
-      question.downvotes.push(userId);
-      if (hasUpvoted) question.upvotes.pull(userId);
-    }
-  } else {
-    throw new ApiError(400, "Invalid vote type");
-  }
-
-  await question.save();
-  res.status(200).json(new ApiResponse(200, question, "Vote updated"));
+  return res.status(200).json(new ApiResponse(200, {}, "Voting disabled for hackathon"));
 });
 
-// ACCEPT ANSWER
 export const acceptAnswer = asyncHandler(async (req, res) => {
-  const { questionId, answerId } = req.params;
-
-  const question = await Question.findById(questionId);
-  if (!question) throw new ApiError(404, "Question not found");
-
-  if (question.author.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "Only the question author can accept an answer");
-  }
-
-  question.acceptedAnswer = answerId;
-  await question.save();
-
-  res.status(200).json(new ApiResponse(200, question, "Answer accepted"));
+  return res.status(200).json(new ApiResponse(200, {}, "Accepting answers disabled"));
 });
 
-// DELETE QUESTION
 export const deleteQuestion = asyncHandler(async (req, res) => {
-  const { id } = req.params;
-
-  const question = await Question.findById(id);
-  if (!question) throw new ApiError(404, "Question not found");
-
-  if (question.author.toString() !== req.user._id.toString()) {
-    throw new ApiError(403, "You can only delete your own question");
-  }
-
-  // Optionally delete all related answers too
-  await Answer.deleteMany({ _id: { $in: question.answers } });
-
-  await question.deleteOne();
-
-  res.status(200).json(new ApiResponse(200, {}, "Question deleted"));
+  return res.status(200).json(new ApiResponse(200, {}, "Delete disabled"));
 });
