@@ -19,7 +19,9 @@ export const authMiddleware = asyncHandler(async (req, res, next) => {
     throw new ApiError(401, "Invalid or expired access token");
   }
 
-  const user = await User.findById(decodedToken?._id).select("-password -refreshToken");
+  const user = await User.findById(decodedToken?._id).select(
+    "-password -refreshToken"
+  );
   if (!user) {
     throw new ApiError(401, "User not found for this token");
   }

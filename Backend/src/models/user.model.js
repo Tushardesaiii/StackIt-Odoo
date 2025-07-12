@@ -1,8 +1,16 @@
-const mongoose = require("mongoose");
-const bcrypt = require("bcryptjs");
+import mongoose from "mongoose";
+import bcrypt from "bcryptjs";
+import jwt from "jsonwebtoken";
 
 const UserSchema = new mongoose.Schema(
   {
+    fullName: {
+      type: String,
+      required: [true, "Full name is required"],
+      trim: true,
+      minlength: 3,
+      maxlength: 50,
+    },
     username: {
       type: String,
       required: [true, "Username is required"],
@@ -26,13 +34,20 @@ const UserSchema = new mongoose.Schema(
       type: String,
       required: [true, "Password is required"],
       minlength: 6,
-      select: false, // don't return password in queries
+      select: false,
     },
     role: {
       type: String,
-      enum: ["user", "admin"],
+      enum: ["user", "admin", "guest"],
       default: "user",
     },
+    isVerified: {
+      type: Boolean,
+      default: false,
+    },
+    refreshToken: String,
+    lastLogin: Date,
+    lastActive: Date,
     notifications: [
       {
         message: { type: String },
@@ -45,7 +60,7 @@ const UserSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-
+// Hash password before save
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   const salt = await bcrypt.genSalt(10);
@@ -53,9 +68,23 @@ UserSchema.pre("save", async function (next) {
   next();
 });
 
-
-UserSchema.methods.matchPassword = async function (enteredPassword) {
+// Password check method
+UserSchema.methods.isPasswordCorrect = async function (enteredPassword) {
   return await bcrypt.compare(enteredPassword, this.password);
 };
 
-module.exports = mongoose.model("User", UserSchema);
+// Access token method
+UserSchema.methods.generateAccessToken = function () {
+  return jwt.sign({ _id: this._id }, process.env.ACCESS_TOKEN_SECRET, {
+    expiresIn: "15m",
+  });
+};
+
+// Refresh token method
+UserSchema.methods.generateRefreshToken = function () {
+  return jwt.sign({ _id: this._id }, process.env.REFRESH_TOKEN_SECRET, {
+    expiresIn: "7d",
+  });
+};
+
+export const User = mongoose.model("User", UserSchema);
