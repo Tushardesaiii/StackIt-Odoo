@@ -1,7 +1,23 @@
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Bell, Menu, User } from "lucide-react";
-import ThemeToggle from "./ThemeToggle";
+import { Bell, Menu, User, Sun, Moon } from "lucide-react";
+
+// ✅ ThemeToggle component added here
+function ThemeToggle({ isDark, onToggle }) {
+  return (
+    <button
+      onClick={onToggle}
+      className="p-2 rounded-full bg-white/30 dark:bg-white/10 hover:bg-white/40 transition backdrop-blur-md shadow"
+      aria-label="Toggle theme"
+    >
+      {isDark ? (
+        <Sun className="w-5 h-5 text-yellow-300" />
+      ) : (
+        <Moon className="w-5 h-5 text-gray-900" />
+      )}
+    </button>
+  );
+}
 
 export default function Navbar({ isLoggedIn = false, unreadCount = 0, isDark, onToggleTheme }) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -64,6 +80,7 @@ export default function Navbar({ isLoggedIn = false, unreadCount = 0, isDark, on
           <Menu className="w-6 h-6 text-white dark:text-white text-black" />
         </button>
       </div>
+
       {menuOpen && (
         <div className="md:hidden bg-black/50 dark:bg-black/50 bg-white/80 dark:border-white/20 border-t flex flex-col items-center py-4 space-y-4 text-white/80 dark:text-white/80 text-black/80">
           <Link to="/" onClick={() => setMenuOpen(false)} className="hover:text-white dark:hover:text-white hover:text-black">

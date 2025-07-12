@@ -1,22 +1,54 @@
-import React from "react";
-import { BrowserRouter as Router, Routes, Route, useLocation } from "react-router-dom";
-import Signup from "./pages/Signup";
-import Login from "./pages/Login";
+// App.jsx
+import React, { useEffect } from "react";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
+import { AuthProvider, useAuth } from "./context/AuthContex.jsx";
 import Landing from "./pages/Landing";
+import Login from "./pages/Login";
+import Signup from "./pages/Signup";
+import Feed from "./pages/Feed";
+import Navbar from "./Components/Navbar";
 
 function AppContent() {
   const location = useLocation();
-  // Always enable dark mode for the app
-  React.useEffect(() => {
+  const { currentUser, authLoading } = useAuth();
+
+  // Always enable dark mode
+  useEffect(() => {
     document.documentElement.classList.add("dark");
   }, []);
+
+  // Hide Navbar on auth routes
+  const hideNavbar = ["/login", "/signup"].includes(location.pathname);
+
+  if (authLoading) return <div className="p-4">Loading...</div>;
+
   return (
     <>
-      {/* Navbar is included inside LandingPage and hidden on /login, /signup */}
+      {!hideNavbar && <Navbar />}
       <Routes>
         <Route path="/" element={<Landing />} />
-        <Route path="/signup" element={<Signup />} />
-        <Route path="/login" element={<Login />} />
+        <Route
+          path="/login"
+          element={currentUser ? <Navigate to="/feed" /> : <Login />}
+        />
+        <Route
+          path="/signup"
+          element={currentUser ? <Navigate to="/feed" /> : <Signup />}
+        />
+        <Route
+          path="/feed"
+          element={
+            currentUser ? <Feed /> : <Navigate to="/login" replace />
+          }
+        />
+        {/* Optional: 404 fallback */}
+        <Route path="*" element={<Navigate to="/" />} />
       </Routes>
     </>
   );
@@ -24,9 +56,11 @@ function AppContent() {
 
 function App() {
   return (
-    <Router>
-      <AppContent />
-    </Router>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 

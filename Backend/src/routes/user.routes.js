@@ -8,7 +8,7 @@ import {
   guestLogin,
 } from "../controllers/user.controller.js";
 
-import { authMiddleware } from "../middleware/auth.middleware.js";
+import { verifyJWT } from "../middleware/auth.middleware.js"; // ✅ consistent
 
 const router = express.Router();
 
@@ -19,7 +19,7 @@ router.post("/guest-login", guestLogin);
 router.post("/refresh-token", refreshAccessToken);
 
 // Protected routes
-router.get("/me", authMiddleware, getCurrentUser);
-router.post("/logout", authMiddleware, logoutUser);
+router.get("/me", verifyJWT, getCurrentUser);
+router.post("/logout", verifyJWT, logoutUser);
 
 export default router;
